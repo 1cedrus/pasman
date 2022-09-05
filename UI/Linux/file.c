@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include "file.h"
 #include "aes.h"
-#include "commands.h"
-
 
 int readFile (char *fileName, unsigned char **out) {
   	FILE *f = fopen(fileName, "rb");
@@ -17,29 +15,12 @@ int readFile (char *fileName, unsigned char **out) {
 	fclose(f);
 }
 
-Bool isTheFirstTime(char *fileName) {
+int isTheFirstTime(char *filename) {
 	unsigned char *buffer = NULL;
-	readFile(fileName, &buffer);
-	if (!buffer) return True;
-	return False;
+	readFile(filename, &buffer);
+	if (!strlen(buffer)) return 1;
+	return 0;
 }
-
-// char* readFileEncrypt (char *fileName, unsigned char **out, unsigned char *key) {
-// 	unsigned char *buffer = NULL;
-
-// 	FILE *f = fopen(fileName, "rb");
-// 	int i = 0;
-// 	while (!feof(f)) {
-// 		*out = realloc(*out, ++i * sizeof(unsigned char));
-// 		fread(*out + (i - 1), 1, 1, f);
-// 	}
-// 	fclose(f);
-
-
-// 	aes_decrypt (*out, i - 1, key, &buffer);
-
-// 	return buffer;
-// }
 
 void read1Line(char *fileName, char *msg) 
 {

@@ -1,5 +1,4 @@
 #include "view.h"
-#include <gtk/gtk.h>
 
 GtkTreeModel* create_and_fill_model (GtkListStore *store) {
     store = gtk_list_store_new (NUM_COLS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);

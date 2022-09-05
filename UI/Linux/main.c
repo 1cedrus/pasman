@@ -1,8 +1,20 @@
 #include <gtk/gtk.h>
 #include "view.h"
+#include "file.h"
 
-    GtkListStore *store;
+GtkListStore *store;
 
+
+// void setPrimaryKey(GtkWidget *entry, gpointer window, gpointer button) {
+//     char *keyPrimary = gtk_entry_get_text(GTK_ENTRY(entry));
+//     writeTextEncrypt("key.log", keyPrimary, keyPrimary, strlen(keyPrimary));
+//     pasman();
+//     gtk_widget_hide(window);
+// }
+
+// void checkPrimaryKey(GtkWidget *button, gpointer window, gpointer entry) {
+
+// }
 
 void start() {
     GtkWidget *window;
@@ -37,6 +49,8 @@ void start() {
     gtk_widget_set_halign(button, GTK_ALIGN_CENTER);
     // gtk_widget_set_valign(button, GTK_ALIGN_CENTER);
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+
+    // g_signal_connect(entry, "activate", G_CALLBACK(setPrimaryKey), window);
 
     gtk_widget_show_all(window);
 }
@@ -134,7 +148,7 @@ void pasman() {
 }
 
 void change() {
-        GtkWidget *window;
+    GtkWidget *window;
     GtkWidget *labelDetail;
     GtkWidget *labelUsername;
     GtkWidget *labelPassword;
@@ -267,11 +281,6 @@ void add() {
 int main (int argc, char *argv[]) {
 
     gtk_init(&argc, &argv);
-    // start();
-    login();
-    pasman();
-    // add();
-    // change();
     gtk_main();
 }
 
