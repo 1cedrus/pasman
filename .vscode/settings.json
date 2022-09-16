@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "atomic": "c",
+        "gtk.h": "c",
+        "commands.h": "c"
+    }
+}
