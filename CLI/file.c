@@ -1,21 +1,25 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "file.h"
-#include "aes.h"
+#include "./includes/file.h"
+#include "./includes/aes.h"
 
-int readFile (char *fileName, unsigned char **out) {
-  	FILE *f = fopen(fileName, "rb");
+#define TIME_LOG "./data/time.log"
+
+int readFile(char *fileName, unsigned char **out)
+{
+	FILE *f = fopen(fileName, "rb");
 	int i = 0;
-	while (!feof(f)) {
+	while (!feof(f))
+	{
 		*out = realloc(*out, ++i * sizeof(unsigned char));
 		fread(*out + (i - 1), 1, 1, f);
 	}
-  	return i - 1;
+	return i - 1;
 	fclose(f);
 }
 
-void read1Line(char *fileName, char *msg) 
+void read1Line(char *fileName, char *msg)
 {
 
 	FILE *f = fopen(fileName, "r");
@@ -24,36 +28,39 @@ void read1Line(char *fileName, char *msg)
 	fclose(f);
 }
 
-void writeFile(char *fileName, const char *msg, int len) 
+void writeFile(char *fileName, const char *msg, int len)
 {
 	FILE *f = fopen(fileName, "wb");
-	for (int i = 0; i < len; i++) {
+	for (int i = 0; i < len; i++)
+	{
 		fwrite(&msg[i], 1, 1, f);
 	}
 	fclose(f);
 }
 
-void getTime(long int *n) 
+void lastTimeAuthorize(long int *n)
 {
-	FILE *f = fopen("time.log", "r");
+	FILE *f = fopen(TIME_LOG, "r");
 	fscanf(f, "%ld", n);
 	fclose(f);
 }
 
 void saveTime(long int *n)
 {
-	FILE *f = fopen("time.log", "w");
+	FILE *f = fopen(TIME_LOG, "w");
 	fprintf(f, "%ld", *n);
 	fclose(f);
 }
 
-void writeTextEncrypt(char *fileName, char *text, char *key, int len) {
+void writeTextEncrypt(char *fileName, char *text, char *key, int len)
+{
 	unsigned char *cipher = NULL;
 	int cipherLen = aes_encrypt(text, len, key, &cipher);
 	writeFile(fileName, cipher, cipherLen);
 }
 
-void writeCipherDecrypt(char *fileName, char *cipher, char *key, int len) {
+void writeCipherDecrypt(char *fileName, char *cipher, char *key, int len)
+{
 	unsigned char *text = NULL;
 	aes_decrypt(cipher, len, key, &text);
 	int textLen = strlen(text);
