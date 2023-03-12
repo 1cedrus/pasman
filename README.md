@@ -1,4 +1,4 @@
-# PASMAN (Password Managerment)
+# PASMAN (Password Management)
 
 This is my first project and also is my first project in C programing language.
 I have decided to do it just to improve my programing skill. 
