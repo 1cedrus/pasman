@@ -1,6 +1,6 @@
 use ncurses::*;
 use std::cmp::*;
-use std::io::{Write, BufWriter};
+use std::io::{BufWriter, Write};
 use std::{
     fs::*,
     io::{BufRead, BufReader, Error},
@@ -19,26 +19,26 @@ struct Credential {
 }
 
 fn main() -> Result<()> {
-    let command: Vec<String> = std::env::args().collect(); 
+    let command: Vec<String> = std::env::args().collect();
     let mut quit = true;
-        
+
     if command.len() <= 1 {
         quit = false;
     } else {
         let command = &command[1..];
         match command {
-           [command, username, password] => {
-            if command.eq("add") {
-                let mut credentials_file = OpenOptions::new().append(true).open("credentials.sou")?;
-                credentials_file.write(format!("{username}:{password}\n").as_bytes())?;
+            [command, username, password] => {
+                if command.eq("add") {
+                    let mut credentials_file =
+                        OpenOptions::new().append(true).open("credentials.sou")?;
+                    credentials_file.write(format!("{username}:{password}\n").as_bytes())?;
 
-                println!("INFO: New credential added!");
+                    println!("INFO: New credential added!");
+                }
             }
-           }
-           _ => {}
+            _ => println!("ERROR: Something wrong happend"),
         }
     }
-
 
     // Initial CLI screen
     initscr();
@@ -51,6 +51,7 @@ fn main() -> Result<()> {
 
     let credentials_buffer = BufReader::new(File::open("credentials.sou")?);
     let mut credentials: Vec<Credential> = vec![];
+    let mut removed_buffer: Vec<(Credential, usize)> = vec![];
 
     for credential in credentials_buffer.lines() {
         if let [username, password] = credential.unwrap().split(':').collect::<Vec<&str>>()[..2] {
@@ -68,38 +69,50 @@ fn main() -> Result<()> {
     while !quit {
         clear();
 
-        for (row, credential) in credentials.iter().enumerate() {
-            let pair = if row.eq(&cursor) {
-                HIGHLIGHT_PAIR
-            } else {
-                REGULAR_PAIR
-            };
+        if cursor == credentials.len() && cursor != 0 {
+            cursor -= 1;
+        }
 
-            attron(COLOR_PAIR(pair));
-            mv(row as i32, 0);
-            addstr(credential.username.as_str());
-            mv(row as i32, 32);
-            addch(':' as u32);
-            if !show.eq(&row) {
-                attron(COLOR_PAIR(HIDDEN_PAIR));
-                addstr(&credential.password.as_str());
-                attroff(COLOR_PAIR(HIDDEN_PAIR));
-            } else {
-                addstr(&credential.password.as_str());
-                attroff(COLOR_PAIR(pair));
+        if credentials.len() == 0 {
+            addstr("Add credentials to use the app, using `add` command");
+        } else {
+            for (row, credential) in credentials.iter().enumerate() {
+                let pair = if row.eq(&cursor) {
+                    HIGHLIGHT_PAIR
+                } else {
+                    REGULAR_PAIR
+                };
+
+                attron(COLOR_PAIR(pair));
+                mv(row as i32, 0);
+                addstr(credential.username.as_str());
+                mv(row as i32, 32);
+                addch(':' as u32);
+                if !show.eq(&row) {
+                    attron(COLOR_PAIR(HIDDEN_PAIR));
+                    addstr(&credential.password.as_str());
+                    attroff(COLOR_PAIR(HIDDEN_PAIR));
+                } else {
+                    addstr(&credential.password.as_str());
+                    attroff(COLOR_PAIR(pair));
+                }
             }
         }
 
         refresh();
         let key = getch();
         match key as u8 as char {
-            'q' => quit = {
-                let mut credentials_file = BufWriter::new(File::create("credentials.sou")?);
-                for credential in &credentials {
-                    credentials_file.write_all(format!("{}:{}\n", credential.username, credential.password).as_bytes())?;
+            'q' => {
+                quit = {
+                    let mut credentials_file = BufWriter::new(File::create("credentials.sou")?);
+                    for credential in &credentials {
+                        credentials_file.write_all(
+                            format!("{}:{}\n", credential.username, credential.password).as_bytes(),
+                        )?;
+                    }
+                    true
                 }
-                true
-            },
+            }
             'j' => cursor = min(cursor + 1, credentials.len() - 1),
             'k' => {
                 if cursor > 0 {
@@ -107,7 +120,20 @@ fn main() -> Result<()> {
                 }
             }
             'c' => show = if show.eq(&cursor) { usize::MAX } else { cursor },
-            'd' => delete = if delete.eq(&cursor) { credentials.remove(delete); usize::MAX } else { cursor },
+            'd' => {
+                delete = if credentials.len() > 0 && delete.eq(&cursor) {
+                    removed_buffer.push((credentials.remove(delete), delete));
+                    usize::MAX
+                } else {
+                    cursor
+                }
+            }
+            'u' => {
+                if removed_buffer.len() > 0 {
+                    let (last_removed, pos) = removed_buffer.pop().unwrap();
+                    credentials.insert(pos, last_removed);
+                }
+            }
             _ => {}
         };
     }
@@ -115,4 +141,3 @@ fn main() -> Result<()> {
     endwin();
     Ok(())
 }
-
