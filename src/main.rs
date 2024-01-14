@@ -116,4 +116,3 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-//TODO: implement delete account and add account
