@@ -6,17 +6,13 @@ use std::{
     io::{BufRead, BufReader, Error},
 };
 
-const REGULAR_PAIR: i16 = 0;
-const HIGHLIGHT_PAIR: i16 = 1;
-const HIDDEN_PAIR: i16 = 2;
+mod account;
+mod style;
+
+use account::*;
+use style::*;
 
 type Result<T> = std::result::Result<T, Error>;
-
-#[derive(Debug)]
-struct Credential {
-    username: String,
-    password: String,
-}
 
 fn main() -> Result<()> {
     let command: Vec<String> = std::env::args().collect();
@@ -41,21 +37,15 @@ fn main() -> Result<()> {
     }
 
     // Initial CLI screen
-    initscr();
-    noecho();
-    curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
-    start_color();
-    init_pair(REGULAR_PAIR, COLOR_WHITE, COLOR_BLACK);
-    init_pair(HIGHLIGHT_PAIR, COLOR_BLACK, COLOR_WHITE);
-    init_pair(HIDDEN_PAIR, COLOR_WHITE, COLOR_WHITE);
+    style::init_style();
 
     let credentials_buffer = BufReader::new(File::open("credentials.sou")?);
-    let mut credentials: Vec<Credential> = vec![];
-    let mut removed_buffer: Vec<(Credential, usize)> = vec![];
+    let mut credentials: Vec<Account> = vec![];
+    let mut removed_buffer: Vec<(Account, usize)> = vec![];
 
     for credential in credentials_buffer.lines() {
         if let [username, password] = credential.unwrap().split(':').collect::<Vec<&str>>()[..2] {
-            credentials.push(Credential {
+            credentials.push(Account {
                 username: username.to_string(),
                 password: password.to_string(),
             })
