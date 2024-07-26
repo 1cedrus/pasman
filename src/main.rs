@@ -8,6 +8,7 @@ use std::{
 
 mod account;
 mod style;
+mod aes;
 
 use account::*;
 use style::*;
