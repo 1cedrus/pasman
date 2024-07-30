@@ -1,10 +1,6 @@
 # PASMANx (Password Management)
 
-The upper version of PASMAN, uses Rust to program.
-
-## Author
-
-- [@onecedrus](https://github.com/1cedrus)
+The upper version of PASMANx, uses Rust to program. You can find the old version here [pasman](https://github.com/1cedrus/pasman/tree/pasman).
 
 ## Infomation
 
