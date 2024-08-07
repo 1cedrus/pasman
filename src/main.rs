@@ -1,134 +1,64 @@
-use ncurses::*;
-use std::cmp::*;
-use std::io::{BufWriter, Write};
-use std::{
-    fs::*,
-    io::{BufRead, BufReader, Error},
-};
+use std::{fs::{self }, io:: Error};
 
 mod account;
 mod style;
 mod aes;
-
-use account::*;
-use style::*;
+use clap::{ Parser, Subcommand };
 
 type Result<T> = std::result::Result<T, Error>;
 
+
+/// A fictional versioning CLI
+#[derive(Debug, Parser)] // requires `derive` feature
+#[command(name = "pasman")]
+#[command(about = "A simple password manager", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Debug, Subcommand)]
+enum Commands {
+    /// Clones repos
+    #[command(arg_required_else_help = true)]
+    Encrypt {
+        /// The remote to clone
+        file_path: String,
+    },
+    /// Compare two commits
+    #[command(arg_required_else_help = true)]
+    Decrypt {
+        file_path: String,
+    },
+}
+
 fn main() -> Result<()> {
-    let command: Vec<String> = std::env::args().collect();
-    let mut quit = true;
+    let args = Cli::parse();
 
-    if command.len() <= 1 {
-        quit = false;
-    } else {
-        let command = &command[1..];
-        match command {
-            [command, username, password] => {
-                if command.eq("add") {
-                    let mut credentials_file =
-                        OpenOptions::new().append(true).open("credentials.sou")?;
-                    credentials_file.write(format!("{username}:{password}\n").as_bytes())?;
+    match args.command {
+        Commands::Encrypt { file_path } => { 
+            let plain_text = fs::read_to_string(&file_path).expect("File is not existed");
+            let key = rpassword::prompt_password("Password: ").unwrap();
+            let confirmation = rpassword::prompt_password("Retype password: ").unwrap();
 
-                    println!("INFO: New credential added!");
-                }
+            if key != confirmation {
+                println!("Password does not match");
+                return Ok(());
             }
-            _ => println!("ERROR: Something wrong happend"),
+
+            let cipher_text = aes::encrypt(&plain_text, &key);
+
+            fs::write(&file_path, cipher_text).expect("Unable to write file");
+        }
+        Commands::Decrypt {file_path} => { 
+            let cipher_text = fs::read_to_string(&file_path).expect("File is not existed");
+            let key = rpassword::prompt_password("Password: ").unwrap();
+            
+            let plain_text = aes::decrypt(&cipher_text.trim(), &key);
+
+            fs::write(&file_path, plain_text).expect("Unable to write file");
         }
     }
 
-    // Initial CLI screen
-    style::init_style();
-
-    let credentials_buffer = BufReader::new(File::open("credentials.sou")?);
-    let mut credentials: Vec<Account> = vec![];
-    let mut removed_buffer: Vec<(Account, usize)> = vec![];
-
-    for credential in credentials_buffer.lines() {
-        if let [username, password] = credential.unwrap().split(':').collect::<Vec<&str>>()[..2] {
-            credentials.push(Account {
-                username: username.to_string(),
-                password: password.to_string(),
-            })
-        }
-    }
-
-    let mut cursor: usize = 0;
-    let mut show: usize = usize::MAX;
-    let mut delete: usize = usize::MAX;
-
-    while !quit {
-        clear();
-
-        if cursor == credentials.len() && cursor != 0 {
-            cursor -= 1;
-        }
-
-        if credentials.len() == 0 {
-            addstr("Add credentials to use the app, using `add` command");
-        } else {
-            for (row, credential) in credentials.iter().enumerate() {
-                let pair = if row.eq(&cursor) {
-                    HIGHLIGHT_PAIR
-                } else {
-                    REGULAR_PAIR
-                };
-
-                attron(COLOR_PAIR(pair));
-                mv(row as i32, 0);
-                addstr(credential.username.as_str());
-                mv(row as i32, 32);
-                addch(':' as u32);
-                if !show.eq(&row) {
-                    attron(COLOR_PAIR(HIDDEN_PAIR));
-                    addstr(&credential.password.as_str());
-                    attroff(COLOR_PAIR(HIDDEN_PAIR));
-                } else {
-                    addstr(&credential.password.as_str());
-                    attroff(COLOR_PAIR(pair));
-                }
-            }
-        }
-
-        refresh();
-        let key = getch();
-        match key as u8 as char {
-            'q' => {
-                quit = {
-                    let mut credentials_file = BufWriter::new(File::create("credentials.sou")?);
-                    for credential in &credentials {
-                        credentials_file.write_all(
-                            format!("{}:{}\n", credential.username, credential.password).as_bytes(),
-                        )?;
-                    }
-                    true
-                }
-            }
-            'j' => cursor = min(cursor + 1, credentials.len() - 1),
-            'k' => {
-                if cursor > 0 {
-                    cursor = cursor - 1
-                }
-            }
-            'c' => show = if show.eq(&cursor) { usize::MAX } else { cursor },
-            'd' => {
-                delete = if credentials.len() > 0 && delete.eq(&cursor) {
-                    removed_buffer.push((credentials.remove(delete), delete));
-                    usize::MAX
-                } else {
-                    cursor
-                }
-            }
-            'u' => {
-                if removed_buffer.len() > 0 {
-                    let (last_removed, pos) = removed_buffer.pop().unwrap();
-                    credentials.insert(pos, last_removed);
-                }
-            }
-            _ => {}
-        };
-    }
-
-    endwin();
     Ok(())
 }
