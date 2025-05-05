@@ -3,10 +3,6 @@
 This is my first project and also is my first project in C programing language.
 I have decided to do it just to improve my programing skill. 
 
-## Author
-
-- [@onecedrus](https://github.com/1cedrus)
-
 ## Guide 
 
 This tool is used to store your password in local (may be cloud in the future). It's use AES to encrypt password and your data.
