@@ -7,10 +7,6 @@ I have decided to do it just to improve my programing skill.
 
 - [@onecedrus](https://github.com/1cedrus)
 
-## Support
-
-- [@hisbrother](https://github.com/sinzii)
-
 ## Guide 
 
 This tool is used to store your password in local (may be cloud in the future). It's use AES to encrypt password and your data.
